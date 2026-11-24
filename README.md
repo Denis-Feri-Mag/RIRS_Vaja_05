@@ -124,3 +124,45 @@ npm start
 ```
 
 Vmesnik je na `http://localhost:5173`.
+
+## Agentno programiranje
+
+Za delo z agentom uporabljamo Grok Build, ukaz `grok`.
+
+Namestitev na macOS in Linux:
+
+```
+curl -fsSL https://x.ai/cli/install.sh | bash
+```
+
+Na Windows v PowerShell:
+
+```
+irm https://x.ai/cli/install.ps1 | iex
+```
+
+Zagon v korenu tega repozitorija:
+
+```
+cd mapa-projekta
+grok
+```
+
+Ob prvem zagonu se prijaviš v brskalniku. Projektni hooki in MCP strežniki se izvedejo šele, ko jim zaupaš. V seji vpiši `/hooks-trust` ali poženi `grok --trust`.
+
+Za GitHub MCP nastavi žeton v okolju, ne v datoteko. Na Linux in macOS:
+
+```
+export GITHUB_TOKEN=tvoj-zeton
+```
+
+Na Windows v PowerShell: `$env:GITHUB_TOKEN="tvoj-zeton"`. Žeton mora imeti dostop do tega repozitorija. V TUI stanje preveriš z `/mcps`. Če žetona nočeš nastavljati, lahko v `.grok/config.toml` pri strežniku github odstraniš vrstico `headers` in se prijaviš z OAuth v `/mcps`.
+
+Pregled datotek za agenta:
+
+- `AGENTS.md` navodila, ukazi, konvencije in omejitve
+- `.grok/skills/` ponovljivi postopki, trenutno nova API točka in testi
+- `.grok/hooks/` varnostni hook pred orodjem in formatiranje po urejanju
+- `.grok/config.toml` dovoljenja in MCP
+- `.mcp.json` ista MCP nastavitev v splošni obliki
+- `docs/specs/` specifikacije novih zgodb

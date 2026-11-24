@@ -166,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://rirs-vaja-05.fly.dev
+      url: https://rirs-vaja-05.vercel.app
     steps:
       - name: Prenesi frontend
         uses: actions/download-artifact@v8

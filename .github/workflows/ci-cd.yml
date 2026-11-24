@@ -1,0 +1,209 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Lint backend
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          ruff check .
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Zgradi frontend
+        working-directory: frontend
+        env:
+          VITE_API_URL: https://rirs-vaja-05.fly.dev
+        run: |
+          npm ci
+          npm run build
+
+      - name: Shrani frontend
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Preveri backend
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m compileall -q app init_db.py
+
+      - name: Pripravi paket za Fly
+        run: |
+          paket=backend-build
+          rm -rf "$paket"
+          mkdir -p "$paket/backend"
+          cp fly.toml .dockerignore "$paket/"
+          cp backend/Dockerfile backend/requirements.txt backend/init_db.py "$paket/backend/"
+          cp -a backend/app "$paket/backend/app"
+          find "$paket" -depth -name '__pycache__' -exec rm -rf {} +
+          find "$paket" -type f -name '*.pyc' -delete
+
+      - name: Shrani backend
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-build
+          path: backend-build
+          if-no-files-found: error
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: box
+          POSTGRES_PASSWORD: box
+          POSTGRES_DB: glass_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U box -d glass_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Testiraj backend
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://box:box@127.0.0.1:5432/glass_test
+          JWT_SECRET: test-secret-za-vajo-naj-bo-dovolj-dolg
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pytest
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Testiraj frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Shrani porocila o pokritosti
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: |
+            backend/coverage.xml
+            backend/coverage
+            frontend/coverage
+          if-no-files-found: warn
+
+  deploy:
+    name: deploy
+    needs: [lint, build, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://rirs-vaja-05.fly.dev
+    steps:
+      - name: Prenesi frontend
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: frontend-dist
+
+      - name: Prenesi backend
+        uses: actions/download-artifact@v8
+        with:
+          name: backend-build
+          path: backend-build
+
+      - uses: superfly/flyctl-actions/setup-flyctl@1.6
+
+      - name: Namesti backend na Fly
+        working-directory: backend-build
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl deploy --remote-only
+
+      - name: Namesti frontend na Vercel
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          npm i -g vercel
+          mkdir -p .vercel/output/static
+          cp -a frontend-dist/. .vercel/output/static/
+          cat > .vercel/output/config.json << 'JSON'
+          {
+            "version": 3,
+            "routes": [
+              { "handle": "filesystem" },
+              { "src": "/(.*)", "dest": "/index.html" }
+            ]
+          }
+          JSON
+          vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"

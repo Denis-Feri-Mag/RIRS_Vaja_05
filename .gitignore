@@ -20,3 +20,5 @@ frontend/coverage/
 # Sistem
 .DS_Store
 Thumbs.db
+
+.vercel

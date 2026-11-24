@@ -22,3 +22,5 @@ frontend/coverage/
 Thumbs.db
 
 .vercel
+.env.*
+!.env.example

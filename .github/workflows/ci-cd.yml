@@ -182,6 +182,18 @@ jobs:
 
       - uses: superfly/flyctl-actions/setup-flyctl@1.6
 
+      - name: Nastavi skrivnosti na Fly
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+        run: |
+          flyctl secrets set --stage -a rirs-vaja-05 \
+            DATABASE_URL="$DATABASE_URL" \
+            JWT_SECRET="$JWT_SECRET" \
+            CORS_ORIGINS="$CORS_ORIGINS"
+
       - name: Namesti backend na Fly
         working-directory: backend-build
         env:

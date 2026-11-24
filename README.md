@@ -1,6 +1,10 @@
 # Glass
 
+[![CI/CD](https://github.com/Denis-Feri-Mag/RIRS_Vaja_05/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Denis-Feri-Mag/RIRS_Vaja_05/actions/workflows/ci-cd.yml)
+
 Spletna aplikacija za vodenje enega lokala: restavracije, kavarne ali hotelske restavracije. Pokrije pot od rezervacije mize do postrežene jedi, zaloge in zaključenega računa.
+
+Aplikacija je na [https://rirs-vaja-05.vercel.app](https://rirs-vaja-05.vercel.app). Backend teče na [Fly.io](https://rirs-vaja-05.fly.dev), baza pa na Neon.
 
 Lastnik lokala jo uporablja kot administrator. Gost rezervira mizo, natakar vodi naročilo, kuhar pripravlja jedi.
 
@@ -37,6 +41,18 @@ Administrator doda račune natakarja in kuharja. Gost se registrira sam.
 - Backend: Python, Flask, Flask-SQLAlchemy, Flask-CORS
 - Podatkovna baza: PostgreSQL, gonilnik psycopg
 - Avtentikacija: JWT (Flask-JWT-Extended), gesla zgoščena z Werkzeug
+
+## CI/CD
+
+Pipeline se sproži ob pull requestu na main in ob potisnitvi na main. Ima štiri faze.
+
+Lint preveri frontend z ESLint in backend z Ruff. Ob napaki se faza ustavi.
+
+Build zgradi frontend in backend, uporabi predpomnilnik odvisnosti in shrani artefakta frontend-dist in backend-build.
+
+Test požene pytest z bazo PostgreSQL in Vitest. Poročilo o pokritosti shrani kot artefakt coverage-report. Če kakšen test pade, pade tudi pipeline.
+
+Deploy teče samo ob potisnitvi na main, ko lint, build in test uspejo. Vzame shranjene artefakte in jih ne gradi znova. Frontend gre na Vercel, backend na Fly. Skrivnosti so v okolju production.
 
 ## Struktura
 

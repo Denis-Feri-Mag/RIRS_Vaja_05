@@ -31,8 +31,6 @@ const POVEZAVE = [
 ];
 
 
-const VERZIJA = "1.0";
-
 const GOST_POVEZAVE = [
   ["#rezervacija", "Rezervacija"],
   ["#moje", "Moje rezervacije"],

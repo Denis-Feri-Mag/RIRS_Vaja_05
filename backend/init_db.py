@@ -1,4 +1,4 @@
-import os
+import argparse
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,18 +8,27 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 
 
 def ensure_database():
-    url = os.environ["DATABASE_URL"]
-    admin_url = url.rsplit("/", 1)[0] + "/postgres"
+    from app import database_url
+
+    url = database_url()
+    osnova, _, ime = url.rpartition("/")
+    ime = ime.split("?", 1)[0]
+    if "?" in url:
+        query = "?" + url.rsplit("?", 1)[1]
+    else:
+        query = ""
+    admin_url = f"{osnova}/postgres{query}"
     engine = create_engine(admin_url, isolation_level="AUTOCOMMIT")
     with engine.connect() as conn:
-        exists = conn.execute(text("SELECT 1 FROM pg_database WHERE datname = 'glass'")).scalar()
+        exists = conn.execute(
+            text("SELECT 1 FROM pg_database WHERE datname = :ime"), {"ime": ime}
+        ).scalar()
         if not exists:
-            conn.execute(text("CREATE DATABASE glass"))
+            conn.execute(text(f'CREATE DATABASE "{ime}"'))
     engine.dispose()
 
 
-def main():
-    ensure_database()
+def seed():
     from werkzeug.security import generate_password_hash
 
     from app import create_app, db
@@ -84,5 +93,18 @@ def main():
         db.session.commit()
 
 
+def main(ustvari_bazo=True):
+    if ustvari_bazo:
+        ensure_database()
+    seed()
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--seed",
+        action="store_true",
+        help="Ustvari tabele in zaseje podatke, brez CREATE DATABASE.",
+    )
+    args = parser.parse_args()
+    main(ustvari_bazo=not args.seed)

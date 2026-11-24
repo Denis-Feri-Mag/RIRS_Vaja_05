@@ -4,7 +4,8 @@ export async function api(path, options = {}) {
   if (options.body) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const response = await fetch(path, { ...options, headers });
+  const osnova = import.meta.env.VITE_API_URL || "";
+  const response = await fetch(`${osnova}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (response.status === 401) {
     if (localStorage.getItem("token")) {

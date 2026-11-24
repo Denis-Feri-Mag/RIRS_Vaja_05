@@ -14,16 +14,32 @@ db = SQLAlchemy()
 jwt = JWTManager()
 
 
+def database_url(url=None):
+    vrednost = url if url is not None else os.environ["DATABASE_URL"]
+    if vrednost.startswith("postgresql+psycopg://") or vrednost.startswith("postgresql+psycopg2://"):
+        return vrednost
+    if vrednost.startswith("postgresql://"):
+        return "postgresql+psycopg://" + vrednost[len("postgresql://") :]
+    if vrednost.startswith("postgres://"):
+        return "postgresql+psycopg://" + vrednost[len("postgres://") :]
+    return vrednost
+
+
+def cors_origins():
+    raw = os.environ.get("CORS_ORIGINS", "http://localhost:5173")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 def create_app():
     app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url()
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_SECRET_KEY"] = os.environ["JWT_SECRET"]
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=12)
 
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app, origins=["http://localhost:5173"])
+    CORS(app, origins=cors_origins())
 
     @app.get("/health")
     def health():
@@ -44,4 +60,3 @@ def create_app():
     app.register_blueprint(rezervacije_bp)
     app.register_blueprint(zaloge_bp)
     return app
-

@@ -1,0 +1,21 @@
+# Predloga za test nove poti. Dopisi v ustrezno datoteko v backend/tests/.
+
+from tests.conftest import glava, token
+
+
+def test_natakar_izvede_dejanje(client, podatki):
+    gost = token(client, "gost@test.com")
+    natakar = token(client, "natakar@test.com")
+    ustvarjena = client.post(
+        "/api/rezervacije",
+        headers=glava(gost),
+        json={"zacetek": "2026-12-01T10:00:00", "miza_id": podatki["miza_id"], "stevilo_oseb": 2},
+    )
+    assert ustvarjena.status_code == 201
+    rezervacija_id = ustvarjena.get_json()["id"]
+
+    odgovor = client.post(
+        f"/api/rezervacije/{rezervacija_id}/primer",
+        headers=glava(natakar),
+    )
+    assert odgovor.status_code == 200

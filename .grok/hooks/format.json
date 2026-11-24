@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|StrReplace|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .grok/hooks/format_changed.py",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

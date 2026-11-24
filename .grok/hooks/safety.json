@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Shell|bash|shell|Read|read|Edit|edit|Write|write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .grok/hooks/safety_check.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

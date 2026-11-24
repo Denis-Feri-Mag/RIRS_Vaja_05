@@ -1,0 +1,21 @@
+# Predloga za novo pot v obstoječem blueprintu.
+# Skopiraj v ustrezen blueprint in prilagodi ime, vlogo in pravila.
+
+from flask import jsonify
+from flask_jwt_extended import get_jwt_identity
+
+from app import db
+from app.auth import samo
+
+
+@bp.post("/<int:rezervacija_id>/primer")
+@samo("natakar")
+def primer(rezervacija_id):
+    rezervacija = db.session.get(Rezervacija, rezervacija_id)
+    if rezervacija is None:
+        return jsonify(napaka="Rezervacija ne obstaja."), 404
+    if rezervacija.status != "potrjena":
+        return jsonify(napaka="Dejanje ni mogoce v tem stanju."), 400
+    # rezervacija.status = "..."
+    db.session.commit()
+    return jsonify(kot_json(rezervacija))

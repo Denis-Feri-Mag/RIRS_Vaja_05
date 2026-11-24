@@ -1,0 +1,23 @@
+app = 'rirs-vaja-05'
+primary_region = 'fra'
+
+[build]
+  dockerfile = 'backend/Dockerfile'
+
+[deploy]
+  release_command = 'python init_db.py --seed'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'stop'
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[http_service.checks]]
+  interval = '10s'
+  timeout = '2s'
+  grace_period = '10s'
+  method = 'GET'
+  path = '/health'

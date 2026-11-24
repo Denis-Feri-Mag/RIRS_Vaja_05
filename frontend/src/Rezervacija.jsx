@@ -54,24 +54,26 @@ export default function Rezervacija() {
     };
   }, []);
 
+  const lahkoNaloziMize = Boolean(datum && ura && vDelovnemCasu(ura));
+  const izvenDelovnegaCasa = Boolean(datum && ura && !vDelovnemCasu(ura));
+  const vidneMize = lahkoNaloziMize ? mize : [];
+  const vidnaMizaId = lahkoNaloziMize ? mizaId : null;
+  const prikazanaNapaka = izvenDelovnegaCasa
+    ? "Restavracija je odprta od 8. do 23. ure."
+    : napaka;
+
   useEffect(() => {
-    if (!datum || !ura) {
-      setMize([]);
-      setMizaId(null);
+    if (!lahkoNaloziMize) {
       return;
     }
-    if (!vDelovnemCasu(ura)) {
-      setMize([]);
-      setMizaId(null);
-      setNapaka("Restavracija je odprta od 8. do 23. ure.");
-      return;
-    }
-    setNapaka("");
     let preklicano = false;
     const zacetek = encodeURIComponent(`${datum}T${ura}:00`);
     api(`/api/rezervacije/mize?zacetek=${zacetek}`)
       .then((data) => {
-        if (!preklicano) prikaziMize(data);
+        if (!preklicano) {
+          setNapaka("");
+          prikaziMize(data);
+        }
       })
       .catch((err) => {
         if (!preklicano) {
@@ -82,9 +84,9 @@ export default function Rezervacija() {
     return () => {
       preklicano = true;
     };
-  }, [datum, ura]);
+  }, [datum, ura, lahkoNaloziMize]);
 
-  const izbrana = mize.find((miza) => miza.id === mizaId);
+  const izbrana = vidneMize.find((miza) => miza.id === vidnaMizaId);
 
   function odpriPotrditev(event) {
     event.preventDefault();
@@ -181,11 +183,11 @@ export default function Rezervacija() {
         <section className="okvir">
           <h2>Mize</h2>
           <div className="mize">
-            {mize.map((miza) => (
+            {vidneMize.map((miza) => (
               <button
                 key={miza.id}
                 type="button"
-                className={miza.id === mizaId ? "miza izbrana" : "miza"}
+                className={miza.id === vidnaMizaId ? "miza izbrana" : "miza"}
                 disabled={!miza.prosta}
                 onClick={() => setMizaId(miza.id)}
               >
@@ -233,7 +235,7 @@ export default function Rezervacija() {
         </div>
       </div>
 
-      {napaka && <p className="napaka">{napaka}</p>}
+      {prikazanaNapaka && <p className="napaka">{prikazanaNapaka}</p>}
       <p className="tiho">Če je miza v terminu že potrjena, se rezervacija ne shrani.</p>
 
       {potrditev && izbrana && (

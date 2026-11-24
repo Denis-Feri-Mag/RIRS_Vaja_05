@@ -126,9 +126,10 @@ export default function Natakar() {
     };
   }, []);
 
+  const vidnePostavke = miza?.narocilo_id ? postavke : [];
+
   useEffect(() => {
     if (!miza?.narocilo_id) {
-      setPostavke([]);
       return;
     }
     const narociloId = miza.narocilo_id;
@@ -335,7 +336,7 @@ export default function Natakar() {
           {miza?.narocilo_id && (
             <>
               <div className="racun">
-                {skupineNaRacunu(postavke).map((postavka) => (
+                {skupineNaRacunu(vidnePostavke).map((postavka) => (
                   <div key={postavka.ids.join("-")} className="kuhinja-jed">
                     <div>
                       <strong>{postavka.naziv}</strong>
@@ -392,7 +393,7 @@ export default function Natakar() {
               >
                 Dodaj na naročilo
               </button>
-              <p>Znesek: {znesekNarocila(postavke)}</p>
+              <p>Znesek: {znesekNarocila(vidnePostavke)}</p>
               <button className="rezerviraj" type="button" onClick={() => setPotrdiRacun(true)}>
                 Zaključi račun
               </button>
@@ -435,7 +436,7 @@ export default function Natakar() {
           <div className="pogovor" role="dialog" aria-modal="true" aria-labelledby="racun-naslov">
             <h2 id="racun-naslov">Zaključek računa</h2>
             <p>Ali res želite zaključiti račun za mizo {miza.stevilka}?</p>
-            <p>Znesek: {znesekNarocila(postavke)}</p>
+            <p>Znesek: {znesekNarocila(vidnePostavke)}</p>
             <div className="pogovor-gumbi">
               <button type="button" className="drugotni" onClick={() => setPotrdiRacun(false)} disabled={zakljucujem}>
                 Ne

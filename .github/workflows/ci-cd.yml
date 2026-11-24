@@ -187,7 +187,7 @@ jobs:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          CORS_ORIGINS: ${{ secrets.CORS_ORIGINS }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
         run: |
           flyctl secrets set --stage -a rirs-vaja-05 \
             DATABASE_URL="$DATABASE_URL" \
@@ -202,8 +202,8 @@ jobs:
 
       - name: Namesti frontend na Vercel
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           npm i -g vercel

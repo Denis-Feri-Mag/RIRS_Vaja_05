@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from flask import Blueprint, jsonify, request
@@ -136,7 +136,7 @@ def odpri():
         natakar_id=int(get_jwt_identity()),
         rezervacija_id=rezervacija_id,
         status="odprto",
-        odprto_ob=datetime.now(timezone.utc),
+        odprto_ob=datetime.now(UTC),
     )
     db.session.add(narocilo)
     db.session.commit()
@@ -281,7 +281,7 @@ def zakljuci(narocilo_id):
     for jed, kolicina in jedi:
         jed.zaloga -= kolicina
 
-    zdaj = datetime.now(timezone.utc)
+    zdaj = datetime.now(UTC)
     narocilo.status = "zakljuceno"
     narocilo.zakljuceno_ob = zdaj
     narocilo.skupni_znesek = znesek

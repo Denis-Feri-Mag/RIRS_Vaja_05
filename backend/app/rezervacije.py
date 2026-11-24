@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity
@@ -27,7 +27,7 @@ def preberi_cas(vrednost):
     except ValueError:
         return None
     if cas.tzinfo is None:
-        cas = cas.replace(tzinfo=timezone.utc)
+        cas = cas.replace(tzinfo=UTC)
     return cas
 
 
@@ -43,8 +43,8 @@ def v_delovnem_casu(zacetek):
 
 
 def miza_prosta(miza_id, zacetek):
-    dan = zacetek.astimezone(timezone.utc).date()
-    zacetek_dneva = datetime.combine(dan, datetime.min.time(), tzinfo=timezone.utc)
+    dan = zacetek.astimezone(UTC).date()
+    zacetek_dneva = datetime.combine(dan, datetime.min.time(), tzinfo=UTC)
     konec_dneva = zacetek_dneva + timedelta(days=1)
     odprta = db.session.scalar(
         db.select(Rezervacija.id)
@@ -80,10 +80,17 @@ def dan():
     if izbran is None:
         return jsonify(napaka="Vnesite dan."), 400
 
-    zacetek = datetime.combine(izbran, datetime.min.time(), tzinfo=timezone.utc)
+    zacetek = datetime.combine(izbran, datetime.min.time(), tzinfo=UTC)
     konec = zacetek + timedelta(days=1)
     vrstice = db.session.execute(
-        db.select(Rezervacija.id, Rezervacija.zacetek, Rezervacija.opomba, Miza.stevilka, Uporabnik.ime, Uporabnik.priimek)
+        db.select(
+            Rezervacija.id,
+            Rezervacija.zacetek,
+            Rezervacija.opomba,
+            Miza.stevilka,
+            Uporabnik.ime,
+            Uporabnik.priimek,
+        )
         .join(Miza, Rezervacija.miza_id == Miza.id)
         .join(Uporabnik, Rezervacija.uporabnik_id == Uporabnik.id)
         .where(
@@ -97,7 +104,7 @@ def dan():
         [
             {
                 "id": vrstica.id,
-                "ura": vrstica.zacetek.astimezone(timezone.utc).strftime("%H:%M"),
+                "ura": vrstica.zacetek.astimezone(UTC).strftime("%H:%M"),
                 "stevilka_mize": vrstica.stevilka,
                 "ime": vrstica.ime,
                 "priimek": vrstica.priimek,

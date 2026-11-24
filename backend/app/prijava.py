@@ -162,7 +162,13 @@ def uredi(uporabnik_id):
     uporabnik.email = email
     uporabnik.vloga = vloga
     db.session.commit()
-    return jsonify(id=uporabnik.id, ime=uporabnik.ime, priimek=uporabnik.priimek, email=uporabnik.email, vloga=uporabnik.vloga)
+    return jsonify(
+        id=uporabnik.id,
+        ime=uporabnik.ime,
+        priimek=uporabnik.priimek,
+        email=uporabnik.email,
+        vloga=uporabnik.vloga,
+    )
 
 
 @bp.delete("/uporabniki/<int:uporabnik_id>")

@@ -9,4 +9,14 @@ export default defineConfig({
       "/api": "http://localhost:5000",
     },
   },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/setupTests.js",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage",
+    },
+  },
 });

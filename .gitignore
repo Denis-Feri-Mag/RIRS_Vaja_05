@@ -5,11 +5,17 @@ venv/
 .venv/
 .env
 *.egg-info/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+coverage/
 
 # Node
 node_modules/
 frontend/build/
 frontend/dist/
+frontend/coverage/
 
 # Sistem
 .DS_Store

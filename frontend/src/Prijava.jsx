@@ -40,7 +40,7 @@ export default function Prijava() {
         </button>
         {napaka && <p className="napaka">{napaka}</p>}
         <p className="tiho seja-povezava">
-          Gost še nima računa? <a href="#registracija">Registracija</a>
+          Še nimate računa? <a href="#registracija">Registracija</a>
         </p>
       </section>
     </form>

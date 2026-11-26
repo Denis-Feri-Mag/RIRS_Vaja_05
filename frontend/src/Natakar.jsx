@@ -22,6 +22,11 @@ const STATUS = {
   postrezena: "postrežena",
 };
 
+const REZERVACIJA_STATUS = {
+  potrjena: "potrjena",
+  gost_prisel: "gost je prišel",
+};
+
 function cena(vrednost) {
   return `${Number(vrednost).toFixed(2).replace(".", ",")} €`;
 }
@@ -70,6 +75,7 @@ export default function Natakar() {
   const [zakljucujem, setZakljucujem] = useState(false);
   const [zaRezervacijo, setZaRezervacijo] = useState(null);
   const [zakljucujemRezervacijo, setZakljucujemRezervacijo] = useState(false);
+  const [prihodId, setPrihodId] = useState(null);
 
   const miza = mize.find((stavka) => stavka.id === mizaId) || null;
 
@@ -151,6 +157,19 @@ export default function Natakar() {
       clearInterval(casovnik);
     };
   }, [miza?.narocilo_id]);
+
+  async function oznaciPrihod(vrstica) {
+    setNapaka("");
+    setPrihodId(vrstica.id);
+    try {
+      await api(`/api/rezervacije/${vrstica.id}/prihod`, { method: "POST" });
+      setVrstice(await api(`/api/rezervacije/dan?datum=${datum}`));
+    } catch (err) {
+      setNapaka(err.message);
+    } finally {
+      setPrihodId(null);
+    }
+  }
 
   async function zakljuciRezervacijo() {
     if (!zaRezervacijo) return;
@@ -288,6 +307,17 @@ export default function Natakar() {
                 {vrstica.ime} {vrstica.priimek}
               </div>
               <div>Opomba: {vrstica.opomba}</div>
+              <div>{REZERVACIJA_STATUS[vrstica.status] || vrstica.status}</div>
+              {vrstica.status === "potrjena" && (
+                <button
+                  type="button"
+                  className="status-gumb"
+                  onClick={() => oznaciPrihod(vrstica)}
+                  disabled={prihodId === vrstica.id}
+                >
+                  Prihod
+                </button>
+              )}
               <button type="button" className="status-gumb" onClick={() => setZaRezervacijo(vrstica)}>
                 Zaključi
               </button>

@@ -50,7 +50,7 @@ def miza_prosta(miza_id, zacetek):
         db.select(Rezervacija.id)
         .filter(
             Rezervacija.miza_id == miza_id,
-            Rezervacija.status == "potrjena",
+            Rezervacija.status.in_(("potrjena", "gost_prisel")),
             Rezervacija.zacetek >= zacetek_dneva,
             Rezervacija.zacetek < konec_dneva,
         )
@@ -87,6 +87,7 @@ def dan():
             Rezervacija.id,
             Rezervacija.zacetek,
             Rezervacija.opomba,
+            Rezervacija.status,
             Miza.stevilka,
             Uporabnik.ime,
             Uporabnik.priimek,
@@ -94,7 +95,7 @@ def dan():
         .join(Miza, Rezervacija.miza_id == Miza.id)
         .join(Uporabnik, Rezervacija.uporabnik_id == Uporabnik.id)
         .where(
-            Rezervacija.status == "potrjena",
+            Rezervacija.status.in_(("potrjena", "gost_prisel")),
             Rezervacija.zacetek >= zacetek,
             Rezervacija.zacetek < konec,
         )
@@ -109,6 +110,7 @@ def dan():
                 "ime": vrstica.ime,
                 "priimek": vrstica.priimek,
                 "opomba": vrstica.opomba or "",
+                "status": vrstica.status,
             }
             for vrstica in vrstice
         ]
@@ -201,13 +203,26 @@ def odpoved(rezervacija_id):
     return jsonify(kot_json(rezervacija))
 
 
+@bp.post("/<int:rezervacija_id>/prihod")
+@samo("natakar")
+def prihod(rezervacija_id):
+    rezervacija = db.session.get(Rezervacija, rezervacija_id)
+    if rezervacija is None:
+        return jsonify(napaka="Rezervacija ne obstaja."), 404
+    if rezervacija.status != "potrjena":
+        return jsonify(napaka="Prihod lahko označite samo pri potrjeni rezervaciji."), 400
+    rezervacija.status = "gost_prisel"
+    db.session.commit()
+    return jsonify(kot_json(rezervacija))
+
+
 @bp.post("/<int:rezervacija_id>/zakljucek")
 @samo("natakar")
 def zakljucek(rezervacija_id):
     rezervacija = db.session.get(Rezervacija, rezervacija_id)
     if rezervacija is None:
         return jsonify(napaka="Rezervacija ne obstaja."), 404
-    if rezervacija.status != "potrjena":
+    if rezervacija.status not in ("potrjena", "gost_prisel"):
         return jsonify(napaka="Rezervacija ni odprta."), 400
     rezervacija.status = "zakljucena"
     db.session.commit()
